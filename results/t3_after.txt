@@ -1,0 +1,106 @@
+Starting 100 clients; slow=10, disconnecting=0, late=0
+SOURCE_DONE: emitted 76 finalized segments
+Results written to /home/dat/cs3103-assignment-4---group-5/t3_after_run01.csv
+Starting 100 clients; slow=10, disconnecting=0, late=0
+SOURCE_DONE: emitted 76 finalized segments
+Results written to /home/dat/cs3103-assignment-4---group-5/t3_after_run02.csv
+Starting 100 clients; slow=10, disconnecting=0, late=0
+SOURCE_DONE: emitted 76 finalized segments
+Results written to /home/dat/cs3103-assignment-4---group-5/t3_after_run03.csv
+
+=== Run 1/3 ===
+Clients=100, duration=60.0s, source segments=76
+LiveRecall Results
+==================
+Clients observed:              100
+Live caption messages:         21470
+Recovered history items:       0
+Accepted messages:             21470
+Recovered messages:            0
+Duplicate messages observed:   0
+Stale messages observed:       0
+P50 caption age:               31.63 ms
+P95 caption age:               60.03 ms
+P99 caption age:               1067.11 ms
+Fresh Caption Ratio (<=500 ms): 98.00%
+Fresh Final Caption Ratio (<=500 ms): 96.20%
+Successful connections:        100
+Connection errors:             0
+Unique final captions:         7600/7600
+Final-caption completeness:    100.00%
+Unique live revisions:         21470/22800
+Normal Update Coverage:        94.17%
+
+Slow-reader isolation
+---------------------
+Normal clients: P50=30.55 ms, P95=55.14 ms, Fresh=100.00% (20520 msgs)
+Slow clients:   P50=257.04 ms, P95=1880.31 ms, Fresh=54.84% (950 msgs)
+
+=== Run 2/3 ===
+Clients=100, duration=60.0s, source segments=76
+LiveRecall Results
+==================
+Clients observed:              100
+Live caption messages:         21466
+Recovered history items:       0
+Accepted messages:             21466
+Recovered messages:            0
+Duplicate messages observed:   0
+Stale messages observed:       0
+P50 caption age:               29.00 ms
+P95 caption age:               55.70 ms
+P99 caption age:               1060.22 ms
+Fresh Caption Ratio (<=500 ms): 98.07%
+Fresh Final Caption Ratio (<=500 ms): 96.29%
+Successful connections:        100
+Connection errors:             0
+Unique final captions:         7600/7600
+Final-caption completeness:    100.00%
+Unique live revisions:         21466/22800
+Normal Update Coverage:        94.15%
+
+Slow-reader isolation
+---------------------
+Normal clients: P50=27.85 ms, P95=51.49 ms, Fresh=100.00% (20520 msgs)
+Slow clients:   P50=210.91 ms, P95=1824.64 ms, Fresh=56.24% (946 msgs)
+
+=== Run 3/3 ===
+Clients=100, duration=60.0s, source segments=76
+LiveRecall Results
+==================
+Clients observed:              100
+Live caption messages:         21465
+Recovered history items:       0
+Accepted messages:             21465
+Recovered messages:            0
+Duplicate messages observed:   0
+Stale messages observed:       0
+P50 caption age:               29.25 ms
+P95 caption age:               55.69 ms
+P99 caption age:               1026.20 ms
+Fresh Caption Ratio (<=500 ms): 98.14%
+Fresh Final Caption Ratio (<=500 ms): 96.38%
+Successful connections:        100
+Connection errors:             0
+Unique final captions:         7600/7600
+Final-caption completeness:    100.00%
+Unique live revisions:         21465/22800
+Normal Update Coverage:        94.14%
+
+Slow-reader isolation
+---------------------
+Normal clients: P50=28.18 ms, P95=52.04 ms, Fresh=100.00% (20520 msgs)
+Slow clients:   P50=210.10 ms, P95=1812.42 ms, Fresh=57.78% (945 msgs)
+
+=== Median across independent runs ===
+P50 caption age                    29.25 ms
+P95 caption age                    55.70 ms
+P99 caption age                  1060.22 ms
+Fresh Caption Ratio                98.07 %
+Fresh Final Caption Ratio          96.29 %
+Final completeness                100.00 %
+Normal Update Coverage             94.15 %
+Normal-client P95                  52.04 ms
+Slow-client P95                  1824.64 ms
+
+Public run complete. CSV and JSON result files were written beside run_demo.py.

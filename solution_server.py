@@ -1,24 +1,32 @@
 #!/usr/bin/env python3
 """
-CS3103 Assignment 4 - LiveRecall naive working baseline.
-
-This starter is intentionally useful but incomplete. It provides the required
-CLI and a basic WebSocket broadcaster so that caption_source.py -> server ->
-browser/load clients works on day one.
-
-It DOES NOT implement the graded networking mechanisms:
-  - revision-state management or deduplication
-  - recent-history recovery or late-join recovery
-  - bounded per-client application queues
-  - slow-client isolation
-  - semantic coalescing / backpressure
-  - constrained-bandwidth overload handling
+CS3103 Assignment 4 - LiveRecall server.
 
 Required evaluator command:
     python solution_server.py --port 8765
 
-Teams should replace or substantially extend the implementation while keeping
-this command-line interface and the protocol in the assignment specification.
+Design summary
+--------------
+* Revision state: accept_caption() keeps the newest revision per active
+  segment and never lets an older revision, or anything after a final,
+  replace newer state.
+* Bounded history: FINAL_HISTORY keeps finalized captions for 60 s (and at
+  most MAX_HISTORY_ITEMS); HISTORY replies are built from it on CLIENT_HELLO
+  for reconnect / late join, excluding finals the client already holds.
+* Per-client isolation: every client has its own bounded semantic queue
+  (ClientState.pending) and its own writer task (send_live_updates), so a
+  slow client never delays the others.
+* Overload policy (semantic backpressure):
+    1. The queue holds at most one message per segment - the newest state -
+       so obsolete provisionals are replaced, never queued behind each other.
+    2. Application-level flow control: at most MAX_INFLIGHT messages may be
+       unconfirmed (ping/pong) per client, so backlog stays in the queue where
+       it can be coalesced instead of in TCP/kernel buffers.
+    3. A client that hits backpressure enters congested mode (finals only),
+       with exponential back-off of the hold time; it returns to full updates
+       once it keeps up.
+    4. Messages are sent as fragmented WebSocket messages so that receiver-side
+       frame buffering hides fewer messages and backpressure is seen early.
 """
 
 from __future__ import annotations
@@ -38,9 +46,53 @@ HISTORY_SECONDS = 60.0
 MAX_HISTORY_ITEMS = 10_000
 MAX_TRACKED_SEGMENTS = 1_024
 
-# Each client's live backlog has a hard limit. 
-MAX_PENDING_MESSAGES = 512
-MAX_DEFERRED_PROVISIONALS = 128
+# Per-client overload policy (see ClientState and send_live_updates).
+#
+# MAX_PENDING_SEGMENTS bounds the application-level queue. Because the queue
+# holds at most ONE message per segment (the newest state), this is a bound on
+# how many segments a client may lag behind, not on how many revisions.
+MAX_PENDING_SEGMENTS = 256
+#
+# MAX_INFLIGHT bounds how many messages may be "in the network" for a client
+# (sent by us but not yet confirmed as read by the client's WebSocket library).
+# Without this, a slow reader's backlog silently accumulates in kernel TCP
+# buffers and the transport write buffer, where it can no longer be coalesced.
+MAX_INFLIGHT = 2
+#
+# Small transport write buffer, for the same reason as MAX_INFLIGHT.
+WRITE_LIMIT_BYTES = 4096
+#
+# A client whose in-flight window filled up recently is "congested": it is
+# sent finals only, while its newest provisional stays coalesced in its queue
+# (and is superseded by the final). This lets the backlog hidden in the
+# client's receive buffers drain instead of being refilled with revisions
+# that will be obsolete by the time they are read.
+#
+# The hold time backs off exponentially: a client that becomes congested again
+# soon after leaving congested mode is evidently still slow, so its hold is
+# doubled (up to the max). A client that stays healthy for a long time gets
+# its hold reset, so a recovered client returns to full-update behaviour.
+CONGESTION_HOLD_MIN_S = 5.0
+CONGESTION_HOLD_MAX_S = 60.0
+#
+# Receiver-side buffering is invisible to the server: a typical WebSocket
+# client library keeps reading frames into its own queue (16 frames by
+# default in the `websockets` library) before it stops reading from TCP.
+# Those frames are "already delivered" from TCP's point of view, so no
+# backpressure is visible until that queue is full - up to 16 stale messages.
+# For a client that has already shown it is slow, we send each message as a
+# fragmented WebSocket message (same JSON text, split over several frames,
+# reassembled transparently by any RFC 6455 client). The receiver's frame
+# queue then holds far fewer messages, backpressure becomes visible much
+# earlier, and probing whether the client has recovered becomes cheap.
+# Clients that have never been congested use DEFAULT_FRAGMENTS (below).
+SLOW_CLIENT_FRAGMENTS = 8
+#
+# Every client starts with light fragmentation so that a slow reader is
+# detected after ~4 buffered messages instead of ~16, before it is known to be
+# slow. Measured trade-off (public T2/T3, see report): normal-client P50
+# +1-8 ms (100-400 clients) vs slow-client P95 8.1 s -> 1.5 s.
+DEFAULT_FRAGMENTS = 4
 
 @dataclass
 class HistoryEntry:
@@ -53,66 +105,93 @@ class ClientState:
     ws: Any
     client_id: Any
     session: str
-    pending: deque[dict[str, Any]] = field(default_factory=deque)
-    deferred_provisionals: OrderedDict[int, dict[str, Any]] = field(
-        default_factory=OrderedDict
-    )
+    # segment -> newest not-yet-sent state of that segment, in segment order.
+    pending: OrderedDict[int, dict[str, Any]] = field(default_factory=OrderedDict)
     ready: asyncio.Event = field(default_factory=asyncio.Event)
     closing: bool = False
+    # Congested (finals-only) mode lasts until congested_until.
+    congested_until: float = 0.0
+    hold_s: float = CONGESTION_HOLD_MIN_S
+    congestion_events: int = 0
+    # True once this client has ever been congested (see SLOW_CLIENT_FRAGMENTS).
+    suspect_slow: bool = False
+    # Statistics, useful for the report / viva.
+    coalesced: int = 0
+
+    def congested(self, now: float) -> bool:
+        return now < self.congested_until
+
+    def mark_congested(self, now: float) -> None:
+        """Called when the in-flight window is full (real backpressure)."""
+        if not self.congested(now):
+            if self.congested_until and now - self.congested_until < self.hold_s:
+                # Re-congested soon after recovering: still slow, back off.
+                self.hold_s = min(self.hold_s * 2, CONGESTION_HOLD_MAX_S)
+            elif self.congested_until and now - self.congested_until > 2 * self.hold_s:
+                self.hold_s = CONGESTION_HOLD_MIN_S
+            self.congestion_events += 1
+            self.suspect_slow = True
+        self.congested_until = max(self.congested_until, now + self.hold_s)
+
+    def pop_next(self, now: float) -> dict[str, Any] | None:
+        """Choose the next message to send, or None to hold back."""
+        if not self.pending:
+            return None
+        segment, message = next(iter(self.pending.items()))
+        if message.get("final", False) or not self.congested(now):
+            del self.pending[segment]
+            return message
+        # Congested and the head is a provisional. Because the source finishes
+        # a segment before starting the next, a provisional at the head means
+        # no final is waiting behind it except for later segments.
+        for seg, queued in self.pending.items():
+            if queued.get("final", False):
+                # Should not happen with in-order segments, but never let a
+                # held provisional block a final.
+                del self.pending[seg]
+                return queued
+        return None
 
     def enqueue(self, message: dict[str, Any]) -> bool:
-        """Queue a live update without allowing the queue to grow indefinitely.
+        """Semantic, bounded per-client queue.
 
-        Returns False only when a final cannot fit because the bounded queue is
-        already full of finals. The final remains in shared history; the caller
-        closes that lagging connection so it can resume from history.
+        Invariant: the queue holds at most one message per segment, and it is
+        always the newest accepted state of that segment.
+
+        * Fast client: the writer sends each update before the next one
+          arrives, so nothing is ever replaced -> full revision coverage.
+        * Slow client / constrained link: an update arrives while an older,
+          still-unsent revision of the same segment is queued. The older one
+          is obsolete, so it is replaced in place (keeping its position, so
+          segments are still delivered in order). A final always replaces a
+          provisional and is never replaced or dropped.
+
+        Returns False only when the client lags by more than
+        MAX_PENDING_SEGMENTS segments; the caller then closes the connection
+        and the client resumes from the bounded server history.
         """
-        is_final = bool(message.get("final"))
         segment = int(message["segment"])
+        queued = self.pending.get(segment)
 
-        if is_final:
-            # A final supersedes any delayed provisional for this segment.
-            self.deferred_provisionals.pop(segment, None)
-            if len(self.pending) >= MAX_PENDING_MESSAGES:
-                removed_provisional = False
-                for index, queued in enumerate(self.pending):
-                    if not queued.get("final", False):
-                        del self.pending[index]
-                        removed_provisional = True
-                        break
-
-                if not removed_provisional:
-                    return False
-
-            self.pending.append(message)
+        if queued is not None:
+            if queued.get("final", False):
+                return True  # final is durable; never overwrite it
+            self.pending[segment] = message  # replace obsolete provisional
+            self.coalesced += 1
             self.ready.set()
             return True
 
-        if len(self.pending) < MAX_PENDING_MESSAGES:
-            self.pending.append(message)
-            self.ready.set()
-            return True
+        if len(self.pending) >= MAX_PENDING_SEGMENTS:
+            # Prefer discarding the oldest queued provisional over failing.
+            for seg, queued in self.pending.items():
+                if not queued.get("final", False):
+                    del self.pending[seg]
+                    self.coalesced += 1
+                    break
+            else:
+                return False
 
-        for index, queued in enumerate(self.pending):
-            if (
-                not queued.get("final", False)
-                and int(queued.get("segment", -1)) == segment
-            ):
-                self.pending[index] = message
-                self.ready.set()
-                return True
-
-        for index, queued in enumerate(self.pending):
-            if not queued.get("final", False):
-                del self.pending[index]
-                self.pending.append(message)
-                self.ready.set()
-                return True
-
-        self.deferred_provisionals[segment] = message
-        self.deferred_provisionals.move_to_end(segment)
-        while len(self.deferred_provisionals) > MAX_DEFERRED_PROVISIONALS:
-            self.deferred_provisionals.popitem(last=False)
+        self.pending[segment] = message
         self.ready.set()
         return True
 
@@ -284,28 +363,68 @@ async def handle_source(ws: Any, hello: dict[str, Any]) -> None:
         print("source disconnected", flush=True)
 
 async def send_live_updates(client: ClientState) -> None:
-    while True:
-        await client.ready.wait()
+    """Per-client writer with application-level flow control.
 
-        while client.pending or client.deferred_provisionals:
-            if client.pending:
-                message = client.pending.popleft()
-            else:
-                _, message = client.deferred_provisionals.popitem(last=False)
+    After every data message we send a WebSocket ping. The client's library
+    answers with a pong only once it has *read* everything before the ping,
+    so an outstanding ping means "data still sitting in the network".
+    We allow at most MAX_INFLIGHT outstanding pings. When a client reads
+    slowly, the writer therefore stops early and new updates wait in
+    client.pending - the one place where obsolete provisionals can be
+    coalesced - instead of in kernel buffers where they would go stale.
+    Fast clients answer pings within milliseconds and are never held back.
+    """
+    inflight: deque[Any] = deque()
+    try:
+        while True:
+            await client.ready.wait()
+            while client.pending:
+                while inflight and inflight[0].done():
+                    inflight.popleft()
+                now = time.monotonic()
+                if len(inflight) >= MAX_INFLIGHT:
+                    # Backpressure: the client is not reading fast enough.
+                    client.mark_congested(now)
+                    await asyncio.wait({inflight[0]}, timeout=1.0)
+                    continue
 
-            try:
-                await client.ws.send(json.dumps(message, separators=(",", ":")))
-            except Exception:
-                try:
-                    await client.ws.close()
-                except Exception:
-                    pass
-                return
+                message = client.pop_next(now)
+                if message is None:
+                    # Holding a provisional for a congested client: wait for
+                    # a new update (e.g. its final) or the hold to expire.
+                    client.ready.clear()
+                    waits = [asyncio.ensure_future(client.ready.wait())]
+                    if inflight:
+                        waits.append(inflight[0])
+                    await asyncio.wait(waits, timeout=0.25,
+                                       return_when=asyncio.FIRST_COMPLETED)
+                    if not waits[0].done():
+                        waits[0].cancel()
+                    continue
 
-        # No await occurs between checking both buffers and clearing the event,
-        # so an enqueue cannot be lost here on the asyncio event loop.
-        client.ready.clear()
+                payload = json.dumps(message, separators=(",", ":"))
+                frags = SLOW_CLIENT_FRAGMENTS if client.suspect_slow else DEFAULT_FRAGMENTS
+                if frags > 1:
+                    step = max(1, -(-len(payload) // frags))
+                    await client.ws.send(
+                        [payload[i:i + step] for i in range(0, len(payload), step)]
+                    )
+                else:
+                    await client.ws.send(payload)
+                inflight.append(await client.ws.ping())
 
+            # No await occurs between checking pending and clearing the event,
+            # so an enqueue cannot be lost here on the asyncio event loop.
+            client.ready.clear()
+    except Exception:
+        try:
+            await client.ws.close()
+        except Exception:
+            pass
+    finally:
+        for waiter in inflight:
+            if not waiter.done():
+                waiter.cancel()
 
 
 async def handle_client(ws: Any, hello: dict[str, Any]) -> None:
@@ -341,7 +460,11 @@ async def handle_client(ws: Any, hello: dict[str, Any]) -> None:
                 await writer
             except asyncio.CancelledError:
                 pass
-        print(f"client disconnected: id={client_id}; clients={len(CLIENTS)}", flush=True)
+        print(
+            f"client disconnected: id={client_id}; clients={len(CLIENTS)}; "
+            f"coalesced={client.coalesced}; congestion_events={client.congestion_events}",
+            flush=True,
+        )
 
 
 async def handler(ws: Any) -> None:
@@ -373,8 +496,9 @@ async def main_async(port: int) -> None:
         max_size=2**20,
         ping_interval=20,
         ping_timeout=20,
+        write_limit=WRITE_LIMIT_BYTES,
     ):
-        print(f"LiveRecall baseline listening on ws://0.0.0.0:{port}", flush=True)
+        print(f"LiveRecall server listening on ws://0.0.0.0:{port}", flush=True)
         await asyncio.Future()
 
 

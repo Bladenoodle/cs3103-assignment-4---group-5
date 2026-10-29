@@ -1,0 +1,702 @@
+LiveRecall baseline listening on ws://0.0.0.0:8765
+Starting 100 clients; slow=0, disconnecting=0, late=0
+client connected: id=0; clients=1
+client connected: id=1; clients=2
+client connected: id=2; clients=3
+client connected: id=3; clients=4
+client connected: id=4; clients=5
+client connected: id=5; clients=6
+client connected: id=6; clients=7
+client connected: id=7; clients=8
+client connected: id=8; clients=9
+client connected: id=9; clients=10
+client connected: id=10; clients=11
+client connected: id=11; clients=12
+client connected: id=12; clients=13
+client connected: id=13; clients=14
+client connected: id=14; clients=15
+client connected: id=15; clients=16
+client connected: id=16; clients=17
+client connected: id=17; clients=18
+client connected: id=18; clients=19
+client connected: id=19; clients=20
+client connected: id=20; clients=21
+client connected: id=21; clients=22
+client connected: id=22; clients=23
+client connected: id=23; clients=24
+client connected: id=24; clients=25
+client connected: id=25; clients=26
+client connected: id=26; clients=27
+client connected: id=27; clients=28
+client connected: id=28; clients=29
+client connected: id=29; clients=30
+client connected: id=30; clients=31
+client connected: id=31; clients=32
+client connected: id=32; clients=33
+client connected: id=33; clients=34
+client connected: id=34; clients=35
+client connected: id=35; clients=36
+client connected: id=36; clients=37
+client connected: id=37; clients=38
+client connected: id=38; clients=39
+client connected: id=39; clients=40
+client connected: id=40; clients=41
+client connected: id=41; clients=42
+client connected: id=42; clients=43
+client connected: id=43; clients=44
+client connected: id=44; clients=45
+client connected: id=45; clients=46
+client connected: id=46; clients=47
+client connected: id=47; clients=48
+client connected: id=48; clients=49
+client connected: id=49; clients=50
+client connected: id=50; clients=51
+client connected: id=51; clients=52
+client connected: id=52; clients=53
+client connected: id=53; clients=54
+client connected: id=54; clients=55
+client connected: id=55; clients=56
+client connected: id=56; clients=57
+client connected: id=57; clients=58
+client connected: id=58; clients=59
+client connected: id=59; clients=60
+client connected: id=60; clients=61
+client connected: id=61; clients=62
+client connected: id=62; clients=63
+client connected: id=63; clients=64
+client connected: id=64; clients=65
+client connected: id=65; clients=66
+client connected: id=66; clients=67
+client connected: id=67; clients=68
+client connected: id=68; clients=69
+client connected: id=69; clients=70
+client connected: id=70; clients=71
+client connected: id=71; clients=72
+client connected: id=72; clients=73
+client connected: id=73; clients=74
+client connected: id=74; clients=75
+client connected: id=75; clients=76
+client connected: id=76; clients=77
+client connected: id=77; clients=78
+client connected: id=78; clients=79
+client connected: id=79; clients=80
+client connected: id=80; clients=81
+client connected: id=81; clients=82
+client connected: id=82; clients=83
+client connected: id=83; clients=84
+client connected: id=84; clients=85
+client connected: id=85; clients=86
+client connected: id=86; clients=87
+client connected: id=87; clients=88
+client connected: id=88; clients=89
+client connected: id=89; clients=90
+client connected: id=90; clients=91
+client connected: id=91; clients=92
+client connected: id=92; clients=93
+client connected: id=93; clients=94
+client connected: id=94; clients=95
+client connected: id=95; clients=96
+client connected: id=96; clients=97
+client connected: id=97; clients=98
+client connected: id=98; clients=99
+client connected: id=99; clients=100
+source connected: session=L1
+source finished
+SOURCE_DONE: emitted 49 finalized segments
+source disconnected
+client disconnected: id=58; clients=97
+client disconnected: id=26; clients=92
+client disconnected: id=57; clients=92
+client disconnected: id=23; clients=82
+client disconnected: id=38; clients=82
+client disconnected: id=64; clients=82
+client disconnected: id=27; clients=82
+client disconnected: id=24; clients=82
+client disconnected: id=19; clients=69
+client disconnected: id=22; clients=69
+client disconnected: id=95; clients=69
+client disconnected: id=60; clients=69
+client disconnected: id=31; clients=69
+client disconnected: id=41; clients=69
+client disconnected: id=86; clients=69
+client disconnected: id=87; clients=69
+client disconnected: id=37; clients=69
+client disconnected: id=47; clients=69
+client disconnected: id=10; clients=45
+client disconnected: id=61; clients=45
+client disconnected: id=45; clients=45
+client disconnected: id=52; clients=45
+client disconnected: id=91; clients=45
+client disconnected: id=85; clients=45
+client disconnected: id=2; clients=45
+client disconnected: id=46; clients=45
+client disconnected: id=53; clients=45
+client disconnected: id=0; clients=45
+client disconnected: id=88; clients=45
+client disconnected: id=96; clients=45
+client disconnected: id=33; clients=45
+client disconnected: id=8; clients=12
+client disconnected: id=4; clients=12
+client disconnected: id=59; clients=12
+client disconnected: id=78; clients=12
+Results written to /home/dat/cs3103-assignment-4---group-5/t2_run01.csv
+client disconnected: id=51; clients=12
+client disconnected: id=76; clients=12
+client disconnected: id=80; clients=12
+client disconnected: id=97; clients=12
+client disconnected: id=5; clients=12
+client disconnected: id=68; clients=12
+client disconnected: id=1; clients=12
+client disconnected: id=77; clients=12
+client disconnected: id=99; clients=12
+client disconnected: id=7; clients=12
+client disconnected: id=30; clients=12
+client disconnected: id=56; clients=12
+client disconnected: id=50; clients=12
+client disconnected: id=20; clients=12
+client disconnected: id=28; clients=12
+client disconnected: id=18; clients=12
+client disconnected: id=94; clients=12
+client disconnected: id=62; clients=12
+client disconnected: id=63; clients=12
+client disconnected: id=40; clients=12
+client disconnected: id=54; clients=12
+client disconnected: id=84; clients=12
+client disconnected: id=21; clients=12
+client disconnected: id=44; clients=12
+client disconnected: id=16; clients=12
+client disconnected: id=66; clients=12
+client disconnected: id=11; clients=12
+client disconnected: id=67; clients=12
+client disconnected: id=83; clients=12
+client disconnected: id=13; clients=12
+client disconnected: id=89; clients=12
+client disconnected: id=48; clients=12
+client disconnected: id=70; clients=12
+client disconnected: id=55; clients=12
+client disconnected: id=90; clients=12
+client disconnected: id=6; clients=12
+client disconnected: id=35; clients=12
+client disconnected: id=92; clients=12
+client disconnected: id=69; clients=12
+client disconnected: id=81; clients=12
+client disconnected: id=71; clients=12
+client disconnected: id=82; clients=12
+client disconnected: id=36; clients=12
+client disconnected: id=72; clients=12
+client disconnected: id=75; clients=12
+client disconnected: id=42; clients=12
+client disconnected: id=49; clients=12
+client disconnected: id=25; clients=12
+client disconnected: id=14; clients=12
+client disconnected: id=17; clients=12
+client disconnected: id=29; clients=12
+client disconnected: id=65; clients=12
+client disconnected: id=3; clients=12
+client disconnected: id=39; clients=0
+client disconnected: id=93; clients=0
+client disconnected: id=43; clients=0
+client disconnected: id=12; clients=0
+client disconnected: id=98; clients=0
+client disconnected: id=73; clients=0
+client disconnected: id=34; clients=0
+client disconnected: id=9; clients=0
+client disconnected: id=79; clients=0
+client disconnected: id=74; clients=0
+client disconnected: id=15; clients=0
+client disconnected: id=32; clients=0
+LiveRecall baseline listening on ws://0.0.0.0:8765
+Starting 100 clients; slow=0, disconnecting=0, late=0
+client connected: id=0; clients=1
+client connected: id=1; clients=2
+client connected: id=2; clients=3
+client connected: id=3; clients=4
+client connected: id=4; clients=5
+client connected: id=5; clients=6
+client connected: id=6; clients=7
+client connected: id=7; clients=8
+client connected: id=8; clients=9
+client connected: id=9; clients=10
+client connected: id=10; clients=11
+client connected: id=11; clients=12
+client connected: id=12; clients=13
+client connected: id=13; clients=14
+client connected: id=14; clients=15
+client connected: id=15; clients=16
+client connected: id=16; clients=17
+client connected: id=17; clients=18
+client connected: id=18; clients=19
+client connected: id=19; clients=20
+client connected: id=20; clients=21
+client connected: id=21; clients=22
+client connected: id=22; clients=23
+client connected: id=23; clients=24
+client connected: id=24; clients=25
+client connected: id=25; clients=26
+client connected: id=26; clients=27
+client connected: id=27; clients=28
+client connected: id=28; clients=29
+client connected: id=29; clients=30
+client connected: id=30; clients=31
+client connected: id=31; clients=32
+client connected: id=32; clients=33
+client connected: id=33; clients=34
+client connected: id=34; clients=35
+client connected: id=35; clients=36
+client connected: id=36; clients=37
+client connected: id=37; clients=38
+client connected: id=38; clients=39
+client connected: id=39; clients=40
+client connected: id=40; clients=41
+client connected: id=41; clients=42
+client connected: id=42; clients=43
+client connected: id=43; clients=44
+client connected: id=44; clients=45
+client connected: id=45; clients=46
+client connected: id=46; clients=47
+client connected: id=47; clients=48
+client connected: id=48; clients=49
+client connected: id=49; clients=50
+client connected: id=50; clients=51
+client connected: id=51; clients=52
+client connected: id=52; clients=53
+client connected: id=53; clients=54
+client connected: id=54; clients=55
+client connected: id=55; clients=56
+client connected: id=56; clients=57
+client connected: id=57; clients=58
+client connected: id=58; clients=59
+client connected: id=59; clients=60
+client connected: id=60; clients=61
+client connected: id=61; clients=62
+client connected: id=62; clients=63
+client connected: id=63; clients=64
+client connected: id=64; clients=65
+client connected: id=65; clients=66
+client connected: id=66; clients=67
+client connected: id=67; clients=68
+client connected: id=68; clients=69
+client connected: id=69; clients=70
+client connected: id=70; clients=71
+client connected: id=71; clients=72
+client connected: id=72; clients=73
+client connected: id=73; clients=74
+client connected: id=74; clients=75
+client connected: id=75; clients=76
+client connected: id=76; clients=77
+client connected: id=77; clients=78
+client connected: id=78; clients=79
+client connected: id=79; clients=80
+client connected: id=80; clients=81
+client connected: id=81; clients=82
+client connected: id=82; clients=83
+client connected: id=83; clients=84
+client connected: id=84; clients=85
+client connected: id=85; clients=86
+client connected: id=86; clients=87
+client connected: id=87; clients=88
+client connected: id=88; clients=89
+client connected: id=89; clients=90
+client connected: id=90; clients=91
+client connected: id=91; clients=92
+client connected: id=92; clients=93
+client connected: id=93; clients=94
+client connected: id=94; clients=95
+client connected: id=95; clients=96
+client connected: id=96; clients=97
+client connected: id=97; clients=98
+client connected: id=98; clients=99
+client connected: id=99; clients=100
+source connected: session=L1
+source finished
+SOURCE_DONE: emitted 49 finalized segments
+source disconnected
+client disconnected: id=28; clients=99
+client disconnected: id=40; clients=95
+client disconnected: id=27; clients=92
+client disconnected: id=8; clients=92
+client disconnected: id=17; clients=92
+client disconnected: id=71; clients=82
+client disconnected: id=38; clients=82
+client disconnected: id=24; clients=82
+client disconnected: id=46; clients=67
+client disconnected: id=49; clients=67
+client disconnected: id=89; clients=67
+client disconnected: id=52; clients=67
+client disconnected: id=58; clients=67
+client disconnected: id=21; clients=67
+client disconnected: id=56; clients=67
+client disconnected: id=84; clients=67
+client disconnected: id=26; clients=67
+client disconnected: id=66; clients=67
+client disconnected: id=19; clients=44
+client disconnected: id=79; clients=44
+client disconnected: id=57; clients=44
+client disconnected: id=77; clients=44
+client disconnected: id=44; clients=44
+client disconnected: id=16; clients=44
+client disconnected: id=74; clients=44
+client disconnected: id=6; clients=44
+client disconnected: id=51; clients=44
+client disconnected: id=83; clients=44
+client disconnected: id=43; clients=44
+client disconnected: id=2; clients=44
+client disconnected: id=12; clients=44
+client disconnected: id=23; clients=44
+client disconnected: id=20; clients=44
+Results written to /home/dat/cs3103-assignment-4---group-5/t2_run02.csv
+client disconnected: id=18; clients=2
+client disconnected: id=61; clients=2
+client disconnected: id=3; clients=2
+client disconnected: id=11; clients=2
+client disconnected: id=72; clients=2
+client disconnected: id=90; clients=2
+client disconnected: id=48; clients=2
+client disconnected: id=32; clients=2
+client disconnected: id=5; clients=2
+client disconnected: id=62; clients=2
+client disconnected: id=53; clients=2
+client disconnected: id=82; clients=2
+client disconnected: id=34; clients=2
+client disconnected: id=29; clients=2
+client disconnected: id=47; clients=2
+client disconnected: id=76; clients=2
+client disconnected: id=94; clients=2
+client disconnected: id=14; clients=2
+client disconnected: id=85; clients=2
+client disconnected: id=80; clients=2
+client disconnected: id=95; clients=2
+client disconnected: id=73; clients=2
+client disconnected: id=97; clients=2
+client disconnected: id=42; clients=2
+client disconnected: id=10; clients=2
+client disconnected: id=39; clients=2
+client disconnected: id=37; clients=2
+client disconnected: id=54; clients=2
+client disconnected: id=64; clients=2
+client disconnected: id=67; clients=2
+client disconnected: id=70; clients=2
+client disconnected: id=36; clients=2
+client disconnected: id=65; clients=2
+client disconnected: id=78; clients=2
+client disconnected: id=1; clients=2
+client disconnected: id=93; clients=2
+client disconnected: id=96; clients=2
+client disconnected: id=86; clients=2
+client disconnected: id=0; clients=2
+client disconnected: id=13; clients=2
+client disconnected: id=98; clients=2
+client disconnected: id=75; clients=2
+client disconnected: id=31; clients=2
+client disconnected: id=50; clients=2
+client disconnected: id=81; clients=2
+client disconnected: id=4; clients=2
+client disconnected: id=7; clients=2
+client disconnected: id=92; clients=2
+client disconnected: id=68; clients=2
+client disconnected: id=88; clients=2
+client disconnected: id=69; clients=2
+client disconnected: id=91; clients=2
+client disconnected: id=55; clients=2
+client disconnected: id=22; clients=2
+client disconnected: id=63; clients=2
+client disconnected: id=45; clients=2
+client disconnected: id=41; clients=2
+client disconnected: id=15; clients=2
+client disconnected: id=9; clients=2
+client disconnected: id=87; clients=2
+client disconnected: id=35; clients=2
+client disconnected: id=60; clients=2
+client disconnected: id=59; clients=2
+client disconnected: id=30; clients=2
+client disconnected: id=25; clients=2
+client disconnected: id=99; clients=0
+client disconnected: id=33; clients=0
+LiveRecall baseline listening on ws://0.0.0.0:8765
+Starting 100 clients; slow=0, disconnecting=0, late=0
+client connected: id=0; clients=1
+client connected: id=1; clients=2
+client connected: id=2; clients=3
+client connected: id=3; clients=4
+client connected: id=4; clients=5
+client connected: id=5; clients=6
+client connected: id=6; clients=7
+client connected: id=7; clients=8
+client connected: id=8; clients=9
+client connected: id=9; clients=10
+client connected: id=10; clients=11
+client connected: id=11; clients=12
+client connected: id=12; clients=13
+client connected: id=13; clients=14
+client connected: id=14; clients=15
+client connected: id=15; clients=16
+client connected: id=16; clients=17
+client connected: id=17; clients=18
+client connected: id=18; clients=19
+client connected: id=19; clients=20
+client connected: id=20; clients=21
+client connected: id=21; clients=22
+client connected: id=22; clients=23
+client connected: id=23; clients=24
+client connected: id=24; clients=25
+client connected: id=25; clients=26
+client connected: id=26; clients=27
+client connected: id=27; clients=28
+client connected: id=28; clients=29
+client connected: id=29; clients=30
+client connected: id=30; clients=31
+client connected: id=31; clients=32
+client connected: id=32; clients=33
+client connected: id=33; clients=34
+client connected: id=34; clients=35
+client connected: id=35; clients=36
+client connected: id=36; clients=37
+client connected: id=37; clients=38
+client connected: id=38; clients=39
+client connected: id=39; clients=40
+client connected: id=40; clients=41
+client connected: id=41; clients=42
+client connected: id=42; clients=43
+client connected: id=43; clients=44
+client connected: id=44; clients=45
+client connected: id=45; clients=46
+client connected: id=46; clients=47
+client connected: id=47; clients=48
+client connected: id=48; clients=49
+client connected: id=49; clients=50
+client connected: id=50; clients=51
+client connected: id=51; clients=52
+client connected: id=52; clients=53
+client connected: id=53; clients=54
+client connected: id=54; clients=55
+client connected: id=55; clients=56
+client connected: id=56; clients=57
+client connected: id=57; clients=58
+client connected: id=58; clients=59
+client connected: id=59; clients=60
+client connected: id=60; clients=61
+client connected: id=61; clients=62
+client connected: id=62; clients=63
+client connected: id=63; clients=64
+client connected: id=64; clients=65
+client connected: id=65; clients=66
+client connected: id=66; clients=67
+client connected: id=67; clients=68
+client connected: id=68; clients=69
+client connected: id=69; clients=70
+client connected: id=70; clients=71
+client connected: id=71; clients=72
+client connected: id=72; clients=73
+client connected: id=73; clients=74
+client connected: id=74; clients=75
+client connected: id=75; clients=76
+client connected: id=76; clients=77
+client connected: id=77; clients=78
+client connected: id=78; clients=79
+client connected: id=79; clients=80
+client connected: id=80; clients=81
+client connected: id=81; clients=82
+client connected: id=82; clients=83
+client connected: id=83; clients=84
+client connected: id=84; clients=85
+client connected: id=85; clients=86
+client connected: id=86; clients=87
+client connected: id=87; clients=88
+client connected: id=88; clients=89
+client connected: id=89; clients=90
+client connected: id=90; clients=91
+client connected: id=91; clients=92
+client connected: id=92; clients=93
+client connected: id=93; clients=94
+client connected: id=94; clients=95
+client connected: id=95; clients=96
+client connected: id=96; clients=97
+client connected: id=97; clients=98
+client connected: id=98; clients=99
+client connected: id=99; clients=100
+source connected: session=L1
+source finished
+source disconnected
+SOURCE_DONE: emitted 49 finalized segments
+client disconnected: id=68; clients=99
+client disconnected: id=38; clients=94
+client disconnected: id=37; clients=94
+client disconnected: id=73; clients=91
+client disconnected: id=86; clients=91
+client disconnected: id=8; clients=91
+client disconnected: id=54; clients=86
+client disconnected: id=67; clients=86
+client disconnected: id=75; clients=86
+client disconnected: id=69; clients=78
+client disconnected: id=16; clients=78
+client disconnected: id=24; clients=78
+client disconnected: id=4; clients=78
+client disconnected: id=39; clients=78
+client disconnected: id=34; clients=61
+client disconnected: id=33; clients=61
+client disconnected: id=48; clients=61
+client disconnected: id=11; clients=61
+client disconnected: id=56; clients=61
+client disconnected: id=66; clients=61
+client disconnected: id=44; clients=61
+client disconnected: id=97; clients=61
+client disconnected: id=76; clients=32
+client disconnected: id=61; clients=32
+client disconnected: id=55; clients=32
+client disconnected: id=95; clients=32
+client disconnected: id=77; clients=32
+client disconnected: id=2; clients=32
+client disconnected: id=49; clients=32
+client disconnected: id=45; clients=32
+client disconnected: id=1; clients=32
+client disconnected: id=94; clients=32
+client disconnected: id=42; clients=32
+client disconnected: id=12; clients=32
+client disconnected: id=51; clients=32
+client disconnected: id=47; clients=32
+client disconnected: id=90; clients=32
+client disconnected: id=13; clients=32
+client disconnected: id=74; clients=32
+client disconnected: id=0; clients=8
+client disconnected: id=18; clients=8
+client disconnected: id=99; clients=8
+client disconnected: id=78; clients=8
+client disconnected: id=43; clients=8
+client disconnected: id=7; clients=8
+client disconnected: id=80; clients=8
+client disconnected: id=35; clients=8
+client disconnected: id=88; clients=8
+client disconnected: id=82; clients=8
+client disconnected: id=64; clients=8
+client disconnected: id=32; clients=8
+client disconnected: id=85; clients=8
+client disconnected: id=89; clients=8
+client disconnected: id=22; clients=8
+client disconnected: id=40; clients=8
+client disconnected: id=71; clients=8
+client disconnected: id=59; clients=8
+client disconnected: id=3; clients=8
+client disconnected: id=46; clients=8
+client disconnected: id=10; clients=8
+client disconnected: id=92; clients=8
+client disconnected: id=79; clients=8
+client disconnected: id=28; clients=8
+client disconnected: id=5; clients=8
+client disconnected: id=84; clients=8
+client disconnected: id=6; clients=8
+client disconnected: id=65; clients=8
+client disconnected: id=27; clients=8
+Results written to /home/dat/cs3103-assignment-4---group-5/t2_run03.csv
+client disconnected: id=72; clients=6
+client disconnected: id=52; clients=6
+client disconnected: id=30; clients=6
+client disconnected: id=87; clients=6
+client disconnected: id=17; clients=6
+client disconnected: id=31; clients=6
+client disconnected: id=57; clients=6
+client disconnected: id=60; clients=6
+client disconnected: id=63; clients=6
+client disconnected: id=20; clients=6
+client disconnected: id=83; clients=6
+client disconnected: id=41; clients=6
+client disconnected: id=25; clients=6
+client disconnected: id=21; clients=6
+client disconnected: id=91; clients=6
+client disconnected: id=23; clients=6
+client disconnected: id=29; clients=6
+client disconnected: id=58; clients=6
+client disconnected: id=81; clients=6
+client disconnected: id=50; clients=6
+client disconnected: id=36; clients=6
+client disconnected: id=19; clients=6
+client disconnected: id=96; clients=6
+client disconnected: id=98; clients=6
+client disconnected: id=9; clients=0
+client disconnected: id=15; clients=0
+client disconnected: id=53; clients=0
+client disconnected: id=93; clients=0
+client disconnected: id=14; clients=0
+client disconnected: id=70; clients=0
+client disconnected: id=26; clients=0
+client disconnected: id=62; clients=0
+
+=== Run 1/3 ===
+Clients=100, duration=40.0s, source segments=49
+LiveRecall Results
+==================
+Clients observed:              100
+Live caption messages:         14700
+Recovered history items:       0
+Accepted messages:             14700
+Recovered messages:            0
+Duplicate messages observed:   0
+Stale messages observed:       0
+P50 caption age:               16.03 ms
+P95 caption age:               25.26 ms
+P99 caption age:               28.41 ms
+Fresh Caption Ratio (<=500 ms): 100.00%
+Fresh Final Caption Ratio (<=500 ms): 100.00%
+Successful connections:        100
+Connection errors:             0
+Unique final captions:         4900/4900
+Final-caption completeness:    100.00%
+Unique live revisions:         14700/14700
+Normal Update Coverage:        100.00%
+
+=== Run 2/3 ===
+Clients=100, duration=40.0s, source segments=49
+LiveRecall Results
+==================
+Clients observed:              100
+Live caption messages:         14700
+Recovered history items:       0
+Accepted messages:             14700
+Recovered messages:            0
+Duplicate messages observed:   0
+Stale messages observed:       0
+P50 caption age:               15.50 ms
+P95 caption age:               29.26 ms
+P99 caption age:               50.71 ms
+Fresh Caption Ratio (<=500 ms): 100.00%
+Fresh Final Caption Ratio (<=500 ms): 100.00%
+Successful connections:        100
+Connection errors:             0
+Unique final captions:         4900/4900
+Final-caption completeness:    100.00%
+Unique live revisions:         14700/14700
+Normal Update Coverage:        100.00%
+
+=== Run 3/3 ===
+Clients=100, duration=40.0s, source segments=49
+LiveRecall Results
+==================
+Clients observed:              100
+Live caption messages:         14700
+Recovered history items:       0
+Accepted messages:             14700
+Recovered messages:            0
+Duplicate messages observed:   0
+Stale messages observed:       0
+P50 caption age:               15.51 ms
+P95 caption age:               26.52 ms
+P99 caption age:               31.15 ms
+Fresh Caption Ratio (<=500 ms): 100.00%
+Fresh Final Caption Ratio (<=500 ms): 100.00%
+Successful connections:        100
+Connection errors:             0
+Unique final captions:         4900/4900
+Final-caption completeness:    100.00%
+Unique live revisions:         14700/14700
+Normal Update Coverage:        100.00%
+
+=== Median across independent runs ===
+P50 caption age                    15.51 ms
+P95 caption age                    26.52 ms
+P99 caption age                    31.15 ms
+Fresh Caption Ratio               100.00 %
+Fresh Final Caption Ratio         100.00 %
+Final completeness                100.00 %
+Normal Update Coverage            100.00 %
+Normal-client P95                  26.52 ms
+
+Public run complete. CSV and JSON result files were written beside run_demo.py.
