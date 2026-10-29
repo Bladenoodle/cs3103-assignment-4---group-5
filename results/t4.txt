@@ -1,0 +1,109 @@
+Starting 100 clients; slow=0, disconnecting=20, late=0
+SOURCE_DONE: emitted 76 finalized segments
+Results written to /home/dat/cs3103-assignment-4---group-5/t4_run01.csv
+Starting 100 clients; slow=0, disconnecting=20, late=0
+SOURCE_DONE: emitted 76 finalized segments
+Results written to /home/dat/cs3103-assignment-4---group-5/t4_run02.csv
+Starting 100 clients; slow=0, disconnecting=20, late=0
+Results written to /home/dat/cs3103-assignment-4---group-5/t4_run03.csv
+SOURCE_DONE: emitted 76 finalized segments
+
+=== Run 1/3 ===
+Clients=100, duration=60.0s, source segments=76
+LiveRecall Results
+==================
+Clients observed:              100
+Live caption messages:         22420
+Recovered history items:       120
+Accepted messages:             22420
+Recovered messages:            120
+Duplicate messages observed:   0
+Stale messages observed:       0
+P50 caption age:               13.70 ms
+P95 caption age:               23.98 ms
+P99 caption age:               26.89 ms
+Fresh Caption Ratio (<=500 ms): 100.00%
+Fresh Final Caption Ratio (<=500 ms): 98.42%
+Successful connections:        120
+Connection errors:             0
+Unique final captions:         7600/7600
+Final-caption completeness:    100.00%
+Unique live revisions:         22420/22800
+Normal Update Coverage:        98.33%
+
+Reconnect / late-join HISTORY response
+--------------------------------------
+Recovery P50: 15.56 ms
+Recovery P95: 16.53 ms
+Note: fast HISTORY response alone does not prove correct recovery; check final completeness and duplicate/stale counts too.
+
+=== Run 2/3 ===
+Clients=100, duration=60.0s, source segments=76
+LiveRecall Results
+==================
+Clients observed:              100
+Live caption messages:         22420
+Recovered history items:       120
+Accepted messages:             22420
+Recovered messages:            120
+Duplicate messages observed:   0
+Stale messages observed:       0
+P50 caption age:               12.81 ms
+P95 caption age:               23.20 ms
+P99 caption age:               26.29 ms
+Fresh Caption Ratio (<=500 ms): 100.00%
+Fresh Final Caption Ratio (<=500 ms): 98.42%
+Successful connections:        120
+Connection errors:             0
+Unique final captions:         7600/7600
+Final-caption completeness:    100.00%
+Unique live revisions:         22420/22800
+Normal Update Coverage:        98.33%
+
+Reconnect / late-join HISTORY response
+--------------------------------------
+Recovery P50: 9.07 ms
+Recovery P95: 11.70 ms
+Note: fast HISTORY response alone does not prove correct recovery; check final completeness and duplicate/stale counts too.
+
+=== Run 3/3 ===
+Clients=100, duration=60.0s, source segments=76
+LiveRecall Results
+==================
+Clients observed:              100
+Live caption messages:         22020
+Recovered history items:       120
+Accepted messages:             22020
+Recovered messages:            120
+Duplicate messages observed:   0
+Stale messages observed:       0
+P50 caption age:               11.73 ms
+P95 caption age:               23.00 ms
+P99 caption age:               26.79 ms
+Fresh Caption Ratio (<=500 ms): 100.00%
+Fresh Final Caption Ratio (<=500 ms): 95.79%
+Successful connections:        120
+Connection errors:             0
+Unique final captions:         7400/7600
+Final-caption completeness:    97.37%
+Unique live revisions:         22020/22800
+Normal Update Coverage:        96.58%
+
+Reconnect / late-join HISTORY response
+--------------------------------------
+Recovery P50: 10.83 ms
+Recovery P95: 11.87 ms
+Note: fast HISTORY response alone does not prove correct recovery; check final completeness and duplicate/stale counts too.
+
+=== Median across independent runs ===
+P50 caption age                    12.81 ms
+P95 caption age                    23.20 ms
+P99 caption age                    26.79 ms
+Fresh Caption Ratio               100.00 %
+Fresh Final Caption Ratio          98.42 %
+Final completeness                100.00 %
+Normal Update Coverage             98.33 %
+Normal-client P95                  23.20 ms
+Recovery P95                       11.87 ms
+
+Public run complete. CSV and JSON result files were written beside run_demo.py.
