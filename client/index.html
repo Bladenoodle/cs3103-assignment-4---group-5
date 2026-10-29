@@ -9,21 +9,62 @@
     #status { font-weight: 700; }
     #live { min-height: 6rem; border: 1px solid #bbb; border-radius: .4rem; padding: 1rem; margin: 1rem 0; }
     .naive-line { padding: .25rem 0; border-bottom: 1px dotted #ddd; }
+
+    #live { max-height: 24rem; overflow-y: auto; }
+
+    .caption {
+      display: grid;
+      grid-template-columns: 3.1rem 4.6rem 1fr;
+      gap: .6rem;
+      align-items: baseline;
+      padding: .3rem .4rem;
+      border-radius: .3rem;
+    }
+    .caption .seg { font-size: .75rem; color: #777; font-variant-numeric: tabular-nums; }
+    .caption .badge {
+      font-size: .68rem; text-transform: uppercase; letter-spacing: .04em;
+      font-weight: 700; text-align: center; padding: .05rem .35rem; border-radius: .25rem;
+    }
+
+    .caption.provisional .badge { color: #b45309; background: #fffbeb; border: 1px solid #fde68a; }
+    .caption.provisional .text  { color: #777; font-style: italic; }
+
+    .caption.final .badge { color: #16a34a; background: #f0fdf4; border: 1px solid #bbf7d0; }
+    .caption.final .text  { color: #1a1a1a; }
+
+    @keyframes flash { from { background: #eff6ff; } to { background: transparent; } }
+    .caption.flash { animation: flash .6s ease-out; }
     button { padding: .55rem .75rem; margin: .2rem; }
     #recall { white-space: pre-wrap; margin-top: 1rem; border-left: 3px solid #ccc; padding-left: 1rem; }
     .hint { font-size: .9rem; color: #555; }
+    .stats { font-size: .82rem; color: #555; background: #f7f7f8; border: 1px solid #e2e2e2;
+             border-radius: .4rem; padding: .5rem .75rem; }
+    #recall-title { font-size: 1rem; margin: 1.25rem 0 .25rem; }
+    .recall-line { display: grid; grid-template-columns: 3.2rem 1fr; gap: .6rem; padding: .22rem 0; font-size: .92rem; }
+    .recall-line .age { color: #777; font-size: .78rem; font-variant-numeric: tabular-nums; }
+    button.active { border-color: #2563eb; color: #2563eb; background: #eff6ff; font-weight: 600; }
+    #drop { margin-left: 1.5rem; color: #b91c1c; }  
+    .stats b { color: #1a1a1a; font-variant-numeric: tabular-nums; }
   </style>
 </head>
 <body>
   <h1>LiveRecall</h1>
   <p>Connection: <span id="status">disconnected</span></p>
   <p class="hint">Starter behavior is intentionally naive: every received revision is appended as a new line.</p>
+  <p class="stats">
+    segments held <b id="stat-segments">0</b> &middot;
+    finalized <b id="stat-finals">0</b> &middot;
+    resume state <b id="stat-resume">segment 0 rev 0</b>
+  </p>
   <div id="live"></div>
   <div>
-    <button data-seconds="30">What did I miss? (30 s)</button>
     <button data-seconds="15">15 s</button>
+    <button data-seconds="30" class="active">30 s</button>
     <button data-seconds="60">60 s</button>
+    <button id="drop" title="Disconnect for 5 seconds, then reconnect and recover">Simulate 5 s dropout</button>
   </div>
+  <h2 id="recall-title">What did I miss in the last 30 s</h2>
+  <p class="hint">Finalized captions, answered from local state without querying the server.</p>
   <div id="recall">TODO: implement the locally maintained recall view.</div>
   <script src="app.js"></script>
 </body>
