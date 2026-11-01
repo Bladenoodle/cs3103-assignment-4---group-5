@@ -46,6 +46,7 @@ const segments = new Map();
 // Latest *contiguous* finalized state held locally. Sent on CLIENT_HELLO.
 let lastFinalSegment = 0;
 let lastFinalRevision = 0;
+let resumeBaselineSet = false;
 
 let lastRecallItems = [];
 
@@ -76,7 +77,7 @@ function mergeCaption(msg, quiet = false) {
   entry.source_ts = ts;
   segments.set(seg, entry);
 
-  if (entry.final) advanceResumeWatermark();
+  if (entry.final) advanceResumeWatermark(seg);
 
   renderSegment(entry, quiet);
   updateStats();
@@ -88,7 +89,12 @@ function mergeCaption(msg, quiet = false) {
  * highest final we happen to hold would tell the server we already have a
  * segment we actually missed, and it would never be resent.
  */
-function advanceResumeWatermark() {
+function advanceResumeWatermark(segment) {
+  if (!resumeBaselineSet) {
+    lastFinalSegment = segment - 1;
+    lastFinalRevision = 0;
+    resumeBaselineSet = true;
+  }
   let next = segments.get(lastFinalSegment + 1);
   while (next && next.final) {
     lastFinalSegment = next.segment;
@@ -202,6 +208,9 @@ function pruneStore() {
       segments.delete(segment);
     }
   }
+  if (liveEl.children.length === 0 && liveEmptyEl && !liveEmptyEl.isConnected) {
+    liveEl.append(liveEmptyEl);
+  }
 }
 
 /* ------------------------------------------------------------------ *
@@ -305,7 +314,6 @@ function connect() {
 
   ws.addEventListener("open", () => {
     const resuming = lastFinalSegment > 0;
-    reconnectAttempt = 0;
     setStatus("connected", "ok");
     ws.send(JSON.stringify({
       type: "CLIENT_HELLO",
@@ -328,6 +336,7 @@ function connect() {
     }
 
     if (msg.type === "HISTORY") {
+      reconnectAttempt = 0;
       const items = Array.isArray(msg.items) ? msg.items : [];
       const ordered = items.slice().sort((a, b) => Number(a.segment) - Number(b.segment));
 
