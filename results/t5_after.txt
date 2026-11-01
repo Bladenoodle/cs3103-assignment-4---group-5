@@ -1,0 +1,24 @@
+== t5_delay100: 3 valid run(s), 1 failed attempt(s) (harness crash, rerun)
+   units: P50/P95/P99/SlowP95/NormP95/RecP95 in ms, % columns in percent
+   run                           P50      P95      P99   Fresh%  FFinal%   Compl%     Cov%      Dup    Stale
+   t5_delay100_r1_a1.log      210.66   259.37   280.27   100.00   100.00   100.00   100.00     0.00     0.00
+   t5_delay100_r2_a2.log      210.90   259.28   277.75   100.00   100.00   100.00   100.00     0.00     0.00
+   t5_delay100_r3_a1.log      210.41   259.68   277.19   100.00   100.00   100.00   100.00     0.00     0.00
+   MEDIAN                     210.66   259.37   277.75   100.00   100.00   100.00   100.00     0.00     0.00
+
+== t5_loss3: 3 valid run(s), 0 failed attempt(s) (harness crash, rerun)
+   units: P50/P95/P99/SlowP95/NormP95/RecP95 in ms, % columns in percent
+   run                           P50      P95      P99   Fresh%  FFinal%   Compl%     Cov%      Dup    Stale
+   t5_loss3_r1_a1.log          14.03    23.97   217.51    99.98    99.92   100.00    97.11     0.00     0.00
+   t5_loss3_r2_a1.log          13.29    26.34   224.43    99.99   100.00   100.00    98.56     0.00     0.00
+   t5_loss3_r3_a1.log          12.24    22.55   219.54    99.98    99.96   100.00    98.52     0.00     0.00
+   MEDIAN                      13.29    23.97   219.54    99.98    99.96   100.00    98.52     0.00     0.00
+
+== t5_delay_loss: 3 valid run(s), 0 failed attempt(s) (harness crash, rerun)
+   units: P50/P95/P99/SlowP95/NormP95/RecP95 in ms, % columns in percent
+   run                           P50      P95      P99   Fresh%  FFinal%   Compl%     Cov%      Dup    Stale
+   t5_delay_loss_r1_a1.log    255.38   486.94   664.69    95.47    95.49   100.00    98.56     0.00     0.00
+   t5_delay_loss_r2_a1.log    254.93   518.59   837.12    94.45    92.94   100.00    97.85     0.00     0.00
+   t5_delay_loss_r3_a1.log    261.11   507.34   693.38    94.84    94.59   100.00    98.53     0.00     0.00
+   MEDIAN                     255.38   507.34   693.38    94.84    94.59   100.00    98.53     0.00     0.00
+

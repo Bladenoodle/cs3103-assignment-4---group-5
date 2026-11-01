@@ -2,3 +2,6 @@ venv/
 __pycache__/
 *.csv
 *.json
+results/raw/
+results/raw/
+results/raw/

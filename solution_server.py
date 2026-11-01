@@ -19,14 +19,23 @@ Design summary
 * Overload policy (semantic backpressure):
     1. The queue holds at most one message per segment - the newest state -
        so obsolete provisionals are replaced, never queued behind each other.
-    2. Application-level flow control: at most MAX_INFLIGHT messages may be
-       unconfirmed (ping/pong) per client, so backlog stays in the queue where
-       it can be coalesced instead of in TCP/kernel buffers.
-    3. A client that hits backpressure enters congested mode (finals only),
-       with exponential back-off of the hold time; it returns to full updates
-       once it keeps up.
-    4. Messages are sent as fragmented WebSocket messages so that receiver-side
-       frame buffering hides fewer messages and backpressure is seen early.
+    2. Application-level flow control with an RTT-AWARE window: after every
+       data message we send a ping; an unanswered ping means "data still in
+       the network or in the client's buffers". The number of allowed
+       unanswered pings grows with the measured path RTT (bandwidth-delay
+       product), so a long but healthy link is never mistaken for a slow
+       reader.
+    3. A client is "congested" (finals only) only when its OLDEST unanswered
+       ping is much older than the path RTT explains - i.e. the client is
+       reading slowly, not merely far away. Congestion ends early as soon as
+       the client's pongs are healthy again, and otherwise after a short,
+       exponentially backed-off hold.
+    4. Fragmentation of WebSocket messages (so receiver-side frame buffering
+       reveals backpressure early) is used for suspected-slow clients and on
+       low-RTT links only. On high-delay links whole messages are sent,
+       because partially delivered fragmented messages are fragile for
+       receivers that cancel a read (timeouts) while a message is half
+       reassembled.
 """
 
 from __future__ import annotations
@@ -41,64 +50,98 @@ from typing import Any
 
 import websockets
 
-# The server retains at most the most recent minute 
+# The server retains at most the most recent minute
 HISTORY_SECONDS = 60.0
 MAX_HISTORY_ITEMS = 10_000
 MAX_TRACKED_SEGMENTS = 1_024
 
-# Per-client overload policy (see ClientState and send_live_updates).
-#
 # MAX_PENDING_SEGMENTS bounds the application-level queue. Because the queue
 # holds at most ONE message per segment (the newest state), this is a bound on
 # how many segments a client may lag behind, not on how many revisions.
 MAX_PENDING_SEGMENTS = 256
-#
-# MAX_INFLIGHT bounds how many messages may be "in the network" for a client
-# (sent by us but not yet confirmed as read by the client's WebSocket library).
-# Without this, a slow reader's backlog silently accumulates in kernel TCP
-# buffers and the transport write buffer, where it can no longer be coalesced.
-MAX_INFLIGHT = 2
-#
-# Small transport write buffer, for the same reason as MAX_INFLIGHT.
+
+# ---- In-flight window (application-level flow control) -------------------
+# Window = MIN_WINDOW + path_rtt / WINDOW_STEP_S, capped at MAX_WINDOW.
+# On loopback (RTT ~1 ms) this is MIN_WINDOW, as before. With ~240 ms RTT it
+# is ~8, enough to keep the pipe full. The cap keeps per-client in-flight data
+# (and therefore uncoalescable stale data) bounded.
+MIN_WINDOW = 2
+MAX_WINDOW = 24
+WINDOW_STEP_S = 0.04
+
+# Small transport write buffer: backlog should stay in client.pending where
+# it can still be coalesced, not in the transport buffer.
 WRITE_LIMIT_BYTES = 4096
-#
-# A client whose in-flight window filled up recently is "congested": it is
-# sent finals only, while its newest provisional stays coalesced in its queue
-# (and is superseded by the final). This lets the backlog hidden in the
-# client's receive buffers drain instead of being refilled with revisions
-# that will be obsolete by the time they are read.
-#
-# The hold time backs off exponentially: a client that becomes congested again
-# soon after leaving congested mode is evidently still slow, so its hold is
-# doubled (up to the max). A client that stays healthy for a long time gets
-# its hold reset, so a recovered client returns to full-update behaviour.
-CONGESTION_HOLD_MIN_S = 5.0
-CONGESTION_HOLD_MAX_S = 60.0
-#
-# Receiver-side buffering is invisible to the server: a typical WebSocket
-# client library keeps reading frames into its own queue (16 frames by
-# default in the `websockets` library) before it stops reading from TCP.
-# Those frames are "already delivered" from TCP's point of view, so no
-# backpressure is visible until that queue is full - up to 16 stale messages.
-# For a client that has already shown it is slow, we send each message as a
-# fragmented WebSocket message (same JSON text, split over several frames,
-# reassembled transparently by any RFC 6455 client). The receiver's frame
-# queue then holds far fewer messages, backpressure becomes visible much
-# earlier, and probing whether the client has recovered becomes cheap.
-# Clients that have never been congested use DEFAULT_FRAGMENTS (below).
-SLOW_CLIENT_FRAGMENTS = 8
-#
-# Every client starts with light fragmentation so that a slow reader is
-# detected after ~4 buffered messages instead of ~16, before it is known to be
-# slow. Measured trade-off (public T2/T3, see report): normal-client P50
-# +1-8 ms (100-400 clients) vs slow-client P95 8.1 s -> 1.5 s.
-DEFAULT_FRAGMENTS = 4
+
+# ---- Congestion detection ------------------------------------------------
+# With a full window, the client is declared congested only if its oldest
+# unanswered ping has waited longer than
+#     CONGEST_MIN_AGE_S + CONGEST_RTT_MULT * path_rtt
+# A slow reader makes pongs take seconds; a delayed/lossy link makes them take
+# a few hundred ms (a TCP retransmission adds >= ~200 ms).
+CONGEST_MIN_AGE_S = 0.5
+CONGEST_RTT_MULT = 4.0
+
+# Congested (finals-only) mode. Short hold with exponential back-off; it also
+# ends early (after CONGESTION_MIN_HOLD_S) once a pong arrives that is as fast
+# as a healthy client's, so recovered clients return to full updates quickly.
+CONGESTION_HOLD_MIN_S = 2.0
+CONGESTION_HOLD_MAX_S = 20.0
+CONGESTION_MIN_HOLD_S = 1.0
+HEALTHY_PONG_BASE_S = 0.1     # pong is healthy if latency <= base + 2*path_rtt
+
+# ---- Fragmentation -------------------------------------------------------
+# A typical WebSocket client library buffers up to 16 received frames before it
+# stops reading from TCP, hiding backpressure from the server. Sending each
+# message as several frames makes that buffer fill after fewer messages.
+SLOW_CLIENT_FRAGMENTS = 8     # clients that have shown real congestion
+DEFAULT_FRAGMENTS = 4         # low-RTT links (loopback / LAN)
+FRAGMENT_MAX_PATH_RTT_S = 0.03  # above this, send whole messages
+
+
+class PathRtt:
+    """Server-wide estimate of the healthy path RTT.
+
+    Tracks the low end of recent pong latencies (fast to move down, slow to
+    move up) and ignores samples from congested clients, so a few slow
+    readers cannot inflate it.
+    """
+
+    CAP_S = 1.0
+
+    def __init__(self) -> None:
+        self.value = 0.002
+        self._init = False
+
+    def update(self, sample: float) -> None:
+        sample = max(0.0, min(float(sample), self.CAP_S))
+        if not self._init:
+            self.value = sample
+            self._init = True
+        elif sample < self.value:
+            self.value = 0.5 * self.value + 0.5 * sample
+        else:
+            self.value += 0.01 * (sample - self.value)
+
+    def window(self) -> int:
+        return min(MAX_WINDOW, MIN_WINDOW + int(self.value / WINDOW_STEP_S))
+
+    def congest_age(self) -> float:
+        return CONGEST_MIN_AGE_S + CONGEST_RTT_MULT * self.value
+
+    def healthy_latency(self) -> float:
+        return HEALTHY_PONG_BASE_S + 2 * self.value
+
+
+PATH = PathRtt()
+
 
 @dataclass
 class HistoryEntry:
     received_at: float
     session: str
     message: dict[str, Any]
+
 
 @dataclass(eq=False)
 class ClientState:
@@ -111,6 +154,7 @@ class ClientState:
     closing: bool = False
     # Congested (finals-only) mode lasts until congested_until.
     congested_until: float = 0.0
+    congested_since: float = 0.0
     hold_s: float = CONGESTION_HOLD_MIN_S
     congestion_events: int = 0
     # True once this client has ever been congested (see SLOW_CLIENT_FRAGMENTS).
@@ -122,7 +166,7 @@ class ClientState:
         return now < self.congested_until
 
     def mark_congested(self, now: float) -> None:
-        """Called when the in-flight window is full (real backpressure)."""
+        """Called when the client is really lagging (stale in-flight ping)."""
         if not self.congested(now):
             if self.congested_until and now - self.congested_until < self.hold_s:
                 # Re-congested soon after recovering: still slow, back off.
@@ -131,7 +175,13 @@ class ClientState:
                 self.hold_s = CONGESTION_HOLD_MIN_S
             self.congestion_events += 1
             self.suspect_slow = True
+            self.congested_since = now
         self.congested_until = max(self.congested_until, now + self.hold_s)
+
+    def note_healthy_pong(self, now: float) -> None:
+        """A pong as fast as a healthy client's: end congestion early."""
+        if self.congested(now) and now - self.congested_since >= CONGESTION_MIN_HOLD_S:
+            self.congested_until = now
 
     def pop_next(self, now: float) -> dict[str, Any] | None:
         """Choose the next message to send, or None to hold back."""
@@ -141,13 +191,10 @@ class ClientState:
         if message.get("final", False) or not self.congested(now):
             del self.pending[segment]
             return message
-        # Congested and the head is a provisional. Because the source finishes
-        # a segment before starting the next, a provisional at the head means
-        # no final is waiting behind it except for later segments.
+        # Congested and the head is a provisional: never let a held
+        # provisional block a final queued behind it.
         for seg, queued in self.pending.items():
             if queued.get("final", False):
-                # Should not happen with in-order segments, but never let a
-                # held provisional block a final.
                 del self.pending[seg]
                 return queued
         return None
@@ -156,15 +203,8 @@ class ClientState:
         """Semantic, bounded per-client queue.
 
         Invariant: the queue holds at most one message per segment, and it is
-        always the newest accepted state of that segment.
-
-        * Fast client: the writer sends each update before the next one
-          arrives, so nothing is ever replaced -> full revision coverage.
-        * Slow client / constrained link: an update arrives while an older,
-          still-unsent revision of the same segment is queued. The older one
-          is obsolete, so it is replaced in place (keeping its position, so
-          segments are still delivered in order). A final always replaces a
-          provisional and is never replaced or dropped.
+        always the newest accepted state of that segment. A final always
+        replaces a provisional and is never replaced or dropped.
 
         Returns False only when the client lags by more than
         MAX_PENDING_SEGMENTS segments; the caller then closes the connection
@@ -202,6 +242,7 @@ LATEST_BY_SEGMENT: OrderedDict[tuple[str, int], dict[str, Any]] = OrderedDict()
 FINALIZED_THROUGH: dict[str, int] = {}
 STATE_LOCK = asyncio.Lock()
 
+
 def prune_history(now: float) -> None:
     while FINAL_HISTORY and now - FINAL_HISTORY[0].received_at > HISTORY_SECONDS:
         FINAL_HISTORY.popleft()
@@ -227,6 +268,7 @@ def requested_seconds(value: Any) -> float:
         return 30.0
     return max(0.0, min(float(value), HISTORY_SECONDS))
 
+
 async def close_lagging_client(client: ClientState) -> None:
     try:
         await client.ws.close(
@@ -235,6 +277,7 @@ async def close_lagging_client(client: ClientState) -> None:
         )
     except Exception:
         pass
+
 
 def make_history(session: str, hello: dict[str, Any], now: float) -> list[dict[str, Any]]:
     seconds = requested_seconds(hello.get("history_seconds", 30))
@@ -258,6 +301,7 @@ def make_history(session: str, hello: dict[str, Any], now: float) -> list[dict[s
 
     items.sort(key=lambda item: (int(item["segment"]), int(item["revision"])))
     return items
+
 
 async def broadcast(message: dict[str, Any]) -> None:
     lagging: list[ClientState] = []
@@ -306,8 +350,6 @@ async def accept_caption(message: dict[str, Any], source_session: str) -> None:
     async with STATE_LOCK:
         if segment <= FINALIZED_THROUGH.get(session, 0):
             # Segment numbers are monotonic in the required source protocol.
-            # Once a segment at or below this watermark is finalized, no later
-            # message for it can be a valid new state.
             return
         previous = LATEST_BY_SEGMENT.get(key)
         if previous is not None:
@@ -325,9 +367,6 @@ async def accept_caption(message: dict[str, Any], source_session: str) -> None:
             FINALIZED_THROUGH[session] = max(
                 FINALIZED_THROUGH.get(session, 0), segment
             )
-            # Final captions live in the bounded history, so retaining a
-            # second per-segment copy is unnecessary. Drop finalized state up
-            # through the watermark; it remains protected from replay above.
             for old_key in tuple(LATEST_BY_SEGMENT):
                 old_session, old_segment = old_key
                 if (
@@ -362,40 +401,59 @@ async def handle_source(ws: Any, hello: dict[str, Any]) -> None:
     finally:
         print("source disconnected", flush=True)
 
+
+def reap_pongs(client: ClientState, inflight: deque, now: float) -> None:
+    """Remove answered pings from the window and learn from their latency."""
+    while inflight and inflight[0][0].done():
+        fut, _sent_at = inflight.popleft()
+        if fut.cancelled() or fut.exception() is not None:
+            continue
+        latency = fut.result()
+        if isinstance(latency, bool) or not isinstance(latency, (int, float)):
+            continue
+        if not client.congested(now):
+            # Samples from congested (slow) clients must not inflate the
+            # healthy-path RTT estimate.
+            PATH.update(latency)
+        if latency <= PATH.healthy_latency():
+            client.note_healthy_pong(now)
+
+
 async def send_live_updates(client: ClientState) -> None:
-    """Per-client writer with application-level flow control.
+    """Per-client writer with RTT-aware application-level flow control.
 
     After every data message we send a WebSocket ping. The client's library
     answers with a pong only once it has *read* everything before the ping,
-    so an outstanding ping means "data still sitting in the network".
-    We allow at most MAX_INFLIGHT outstanding pings. When a client reads
-    slowly, the writer therefore stops early and new updates wait in
-    client.pending - the one place where obsolete provisionals can be
-    coalesced - instead of in kernel buffers where they would go stale.
-    Fast clients answer pings within milliseconds and are never held back.
+    so an outstanding ping means "data still in the network or client
+    buffers". We allow up to PATH.window() outstanding pings (the window
+    scales with path RTT). If the window is full AND the oldest ping is far
+    older than the path RTT explains, the client is a slow reader: it becomes
+    congested and receives finals only until it recovers. If the window is
+    merely full on a long link, we simply wait for the next pong.
     """
-    inflight: deque[Any] = deque()
+    inflight: deque[tuple[Any, float]] = deque()
     try:
         while True:
             await client.ready.wait()
             while client.pending:
-                while inflight and inflight[0].done():
-                    inflight.popleft()
                 now = time.monotonic()
-                if len(inflight) >= MAX_INFLIGHT:
-                    # Backpressure: the client is not reading fast enough.
-                    client.mark_congested(now)
-                    await asyncio.wait({inflight[0]}, timeout=1.0)
+                reap_pongs(client, inflight, now)
+                if len(inflight) >= PATH.window():
+                    if now - inflight[0][1] > PATH.congest_age():
+                        # Real backpressure: pongs are far slower than the
+                        # path RTT explains.
+                        client.mark_congested(now)
+                    await asyncio.wait({inflight[0][0]}, timeout=0.25)
                     continue
 
                 message = client.pop_next(now)
                 if message is None:
                     # Holding a provisional for a congested client: wait for
-                    # a new update (e.g. its final) or the hold to expire.
+                    # a new update (e.g. its final), a pong, or hold expiry.
                     client.ready.clear()
                     waits = [asyncio.ensure_future(client.ready.wait())]
                     if inflight:
-                        waits.append(inflight[0])
+                        waits.append(inflight[0][0])
                     await asyncio.wait(waits, timeout=0.25,
                                        return_when=asyncio.FIRST_COMPLETED)
                     if not waits[0].done():
@@ -403,7 +461,12 @@ async def send_live_updates(client: ClientState) -> None:
                     continue
 
                 payload = json.dumps(message, separators=(",", ":"))
-                frags = SLOW_CLIENT_FRAGMENTS if client.suspect_slow else DEFAULT_FRAGMENTS
+                if client.suspect_slow:
+                    frags = SLOW_CLIENT_FRAGMENTS
+                elif PATH.value < FRAGMENT_MAX_PATH_RTT_S:
+                    frags = DEFAULT_FRAGMENTS
+                else:
+                    frags = 1
                 if frags > 1:
                     step = max(1, -(-len(payload) // frags))
                     await client.ws.send(
@@ -411,7 +474,8 @@ async def send_live_updates(client: ClientState) -> None:
                     )
                 else:
                     await client.ws.send(payload)
-                inflight.append(await client.ws.ping())
+                sent_at = time.monotonic()
+                inflight.append((await client.ws.ping(), sent_at))
 
             # No await occurs between checking pending and clearing the event,
             # so an enqueue cannot be lost here on the asyncio event loop.
@@ -422,7 +486,7 @@ async def send_live_updates(client: ClientState) -> None:
         except Exception:
             pass
     finally:
-        for waiter in inflight:
+        for waiter, _ in inflight:
             if not waiter.done():
                 waiter.cancel()
 
@@ -462,7 +526,8 @@ async def handle_client(ws: Any, hello: dict[str, Any]) -> None:
                 pass
         print(
             f"client disconnected: id={client_id}; clients={len(CLIENTS)}; "
-            f"coalesced={client.coalesced}; congestion_events={client.congestion_events}",
+            f"coalesced={client.coalesced}; congestion_events={client.congestion_events}; "
+            f"path_rtt_ms={PATH.value * 1000:.0f}",
             flush=True,
         )
 

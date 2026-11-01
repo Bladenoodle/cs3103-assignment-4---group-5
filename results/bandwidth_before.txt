@@ -1,0 +1,16 @@
+== bw_2mbit: 3 valid run(s), 0 failed attempt(s) (harness crash, rerun)
+   units: P50/P95/P99/SlowP95/NormP95/RecP95 in ms, % columns in percent
+   run                           P50      P95      P99   Fresh%  FFinal%   Compl%     Cov%      Dup    Stale
+   bw_2mbit_r1_a1.log          13.58    37.21    40.62   100.00   100.00   100.00   100.00     0.00     0.00
+   bw_2mbit_r2_a1.log          13.63    37.42    40.91   100.00   100.00   100.00   100.00     0.00     0.00
+   bw_2mbit_r3_a1.log          13.09    36.97    40.52   100.00   100.00   100.00   100.00     0.00     0.00
+   MEDIAN                      13.58    37.21    40.62   100.00   100.00   100.00   100.00     0.00     0.00
+
+== bw_500kbit: 3 valid run(s), 0 failed attempt(s) (harness crash, rerun)
+   units: P50/P95/P99/SlowP95/NormP95/RecP95 in ms, % columns in percent
+   run                           P50      P95      P99   Fresh%  FFinal%   Compl%     Cov%      Dup    Stale
+   bw_500kbit_r1_a1.log       804.40  1084.75  1210.99     0.57     0.00    98.84    99.59     0.00     0.00
+   bw_500kbit_r2_a1.log       839.31  1136.19  1302.13     2.22     1.63    99.39    99.80     0.00     0.00
+   bw_500kbit_r3_a1.log       834.32  1142.37  1379.32     1.72     1.27    99.55    99.79     0.00     0.00
+   MEDIAN                     834.32  1136.19  1302.13     1.72     1.27    99.39    99.79     0.00     0.00
+

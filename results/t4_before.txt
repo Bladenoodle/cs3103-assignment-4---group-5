@@ -1,0 +1,8 @@
+== t4: 3 valid run(s), 0 failed attempt(s) (harness crash, rerun)
+   units: P50/P95/P99/SlowP95/NormP95/RecP95 in ms, % columns in percent
+   run                           P50      P95      P99   Fresh%  FFinal%   Compl%     Cov%      Dup    Stale   RecP95
+   t4_r1_a1.log                 7.19    13.27    16.89   100.00    98.42    98.42    98.33     0.00     0.00     4.58
+   t4_r2_a1.log                 7.93    13.55    15.09   100.00    98.42    98.42    98.33     0.00     0.00     3.92
+   t4_r3_a1.log                 7.58    13.35    15.10   100.00    98.42    98.42    98.33     0.00     0.00     5.18
+   MEDIAN                       7.58    13.35    15.10   100.00    98.42    98.42    98.33     0.00     0.00     4.58
+
