@@ -49,7 +49,7 @@ python solution_server.py --port 8765
 python -m http.server 8000 --directory client
 
 # Terminal 3 - caption source (long run so the 60 s recall view is meaningful)
-python caption_source.py --uri ws://127.0.0.1:8765 --segments 120
+python caption_source.py --duration 120
 ```
 
 Open `http://127.0.0.1:8000` in at least two browser tabs. The client shows the live caption,
