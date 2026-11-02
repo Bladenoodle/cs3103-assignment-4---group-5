@@ -128,11 +128,12 @@ Run the tests on an otherwise idle VM, with at least 1 GB of free disk.
 - **Bandwidth-limit (lean) mode**: if most clients are slow at the same moment, the shared link
   is the bottleneck. The server then sends unfragmented messages and far fewer pings, which
   removes protocol overhead on a nearly full link, while keeping queues, coalescing and finals
-  priority. It switches back automatically when pongs are fast again.
+  priority. It also sends each client at most one provisional update per second, so finals and the latest
+  state stay fresh instead of queueing behind stale revisions. It switches back automatically when pongs are fast again.
 
 ## 7. Known limitations
 
-- Under a 500 kbit cap, delivery of every provisional revision is about 92 %; the missing ones are
+- Under a 500 kbit cap, only about half (52 %) of provisional revisions are delivered; the missing ones are
   deliberately coalesced, and every final caption is delivered.
 - Lean mode needs at least 8 clients and about 1-2 s of sustained slowness to trigger, so very small
   or very short tests run in normal mode.

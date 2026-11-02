@@ -1,16 +1,16 @@
 == bw_2mbit: 3 valid run(s), 0 failed attempt(s) (harness crash, rerun)
    units: P50/P95/P99/SlowP95/NormP95/RecP95 in ms, % columns in percent
    run                           P50      P95      P99   Fresh%  FFinal%   Compl%     Cov%      Dup    Stale
-   bw_2mbit_r1_a1.log          46.30    73.26   104.83   100.00   100.00   100.00   100.00     0.00     0.00
-   bw_2mbit_r2_a1.log          46.00    73.15   102.63   100.00   100.00   100.00   100.00     0.00     0.00
-   bw_2mbit_r3_a1.log          46.26    72.89   102.83   100.00   100.00   100.00   100.00     0.00     0.00
-   MEDIAN                      46.26    73.15   102.83   100.00   100.00   100.00   100.00     0.00     0.00
+   bw_2mbit_r1_a1.log          46.52    73.35   105.78   100.00   100.00   100.00   100.00     0.00     0.00
+   bw_2mbit_r2_a1.log          46.37    73.06   103.79   100.00   100.00   100.00   100.00     0.00     0.00
+   bw_2mbit_r3_a1.log          46.34    72.96   102.74   100.00   100.00   100.00   100.00     0.00     0.00
+   MEDIAN                      46.37    73.06   103.79   100.00   100.00   100.00   100.00     0.00     0.00
 
-== bw_500kbit: 3 valid run(s), 0 failed attempt(s) (harness crash, rerun)
+== bw_500kbit: 3 valid run(s), 3 failed attempt(s) (harness crash, rerun)
    units: P50/P95/P99/SlowP95/NormP95/RecP95 in ms, % columns in percent
    run                           P50      P95      P99   Fresh%  FFinal%   Compl%     Cov%      Dup    Stale
-   bw_500kbit_r1_a1.log       935.05  1259.39  1491.75     0.01     0.00    97.96    89.41     0.00     0.00
-   bw_500kbit_r2_a1.log       957.09  1269.84  1540.85     0.19     0.00   100.00    94.88     0.00     0.00
-   bw_500kbit_r3_a1.log       951.12  1261.11  1521.33     0.32     0.00   100.00    92.33     0.00     0.00
-   MEDIAN                     951.12  1261.11  1521.33     0.19     0.00   100.00    92.33     0.00     0.00
+   bw_500kbit_r1_a3.log       169.97  1076.62  1833.64    81.74    85.41   100.00    53.05     0.00     0.00
+   bw_500kbit_r2_a1.log       182.15  1818.93  3699.59    69.47    72.00   100.00    52.18     0.00     0.00
+   bw_500kbit_r3_a2.log       142.11  1139.61  1665.09    81.03    84.39    97.96    52.38     0.00     0.00
+   MEDIAN                     169.97  1139.61  1833.64    81.03    84.39   100.00    52.38     0.00     0.00
 

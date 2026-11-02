@@ -155,6 +155,13 @@ LEAN_MIN_DWELL_S = 5.0         # stay lean at least this long
 LEAN_WINDOW_S = 3.0            # pong samples older than this are forgotten
 LEAN_MIN_SAMPLES = 20
 LEAN_MIN_CLIENTS = 8           # never judge "everyone is slow" from a handful
+# While lean mode is on, a client receives at most one PROVISIONAL update per
+# LEAN_PROV_INTERVAL_S (always the newest state of the oldest queued segment);
+# finals are never delayed by this. On a link that cannot carry every revision,
+# forwarding all of them only builds a stale backlog - this keeps finals and the
+# latest useful state fresh instead. It applies only while the link monitor
+# says the shared link is the bottleneck, never in normal operation.
+LEAN_PROV_INTERVAL_S = 1.0
 LEAN_PING_EVERY = 16           # lean mode: one probe ping per N messages
 LEAN_PING_MAX_GAP_S = 3.0      # ...but at least one every few seconds
 
@@ -249,6 +256,7 @@ class ClientState:
     coalesced: int = 0
     # Lean mode: messages sent since the last probe ping, and when it was sent.
     since_ping: int = 0
+    last_prov_at: float = 0.0
     last_ping_at: float = 0.0
 
     def congested(self, now: float) -> bool:
@@ -277,8 +285,11 @@ class ClientState:
         if not self.pending:
             return None
         segment, message = next(iter(self.pending.items()))
-        if message.get("final", False) or not self.congested(now):
+        hold_prov = MONITOR.lean and now - self.last_prov_at < LEAN_PROV_INTERVAL_S
+        if message.get("final", False) or not (self.congested(now) or hold_prov):
             del self.pending[segment]
+            if not message.get("final", False):
+                self.last_prov_at = now
             return message
         # Congested and the head is a provisional: never let a held
         # provisional block a final queued behind it.
