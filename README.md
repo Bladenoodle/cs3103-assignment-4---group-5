@@ -1,13 +1,13 @@
 # LiveRecall - CS3103 Assignment 4 (Group 5)
 
 A WebSocket caption relay: `caption_source.py` -> `solution_server.py` -> browser client / simulated load clients.
-The server keeps the newest revision of every segment, never loses a final caption, isolates slow clients,
+The server keeps the newest revision of every segment, preserves every final caption, isolates slow clients,
 recovers reconnecting and late-joining clients from a bounded 60 s history, and adapts when the
 network is impaired (delay, loss, or a bandwidth cap).
 
 ## 1. Environment (tested)
 
-- Ubuntu 24.04.1 LTS (the Ubuntu VM from the Mininet lab, run inside a VM), Python 3.12.3
+- Ubuntu 24.04.1 LTS (the Mininet-lab Ubuntu VM), Python 3.12.3
 - `tc` / `netem` from `iproute2` (used on the loopback interface `lo` for the impairment tests)
 - Only Python dependency: `websockets>=13,<17` (tested with 16.1.1)
 
@@ -16,7 +16,7 @@ network is impaired (delay, loss, or a bandwidth cap).
 ```bash
 sudo apt update
 sudo apt install -y python3 python3-venv python3-pip iproute2
-git clone https://github.com/Bladenoodle/cs3103-assignment-4---group-5/tree/main && cd cs3103-assignment-4---group-5
+git clone https://github.com/Bladenoodle/cs3103-assignment-4---group-5.git && cd cs3103-assignment-4---group-5
 python3 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
@@ -62,7 +62,8 @@ server or close and reopen a tab while the source is running. See `DEMO_GUIDE.md
 
 Each command starts the server, the simulated clients and the caption source itself
 (`run_demo.py`), writes `<stem>.csv` / `<stem>.json`, and prints the metrics. Use `--runs 3` for
-the reported median of three independent runs.
+the reported median of three independent runs. The CSV and JSON files are written next to
+`run_demo.py` and are not needed once the summaries have been read.
 
 | Test | Command |
 |------|---------|
@@ -103,7 +104,7 @@ bash network_profiles/reset.sh
 sudo -v                        # cache the sudo password first
 scripts/run_all.sh before      # naive starter baseline (built from the original commit)
 scripts/run_all.sh after       # our solution
-python3 scripts/summarize.py   # medians over the runs
+cat results/*_after.txt        # medians over the 3 runs for each test
 ```
 
 Outputs: `results/<test>_before.txt`, `results/<test>_after.txt`, `results/env_*.txt`
@@ -114,15 +115,15 @@ Run the tests on an otherwise idle VM, with at least 1 GB of free disk.
 
 ## 6. Design summary
 
-- **Revision state**: per segment the newest revision wins; nothing replaces a final or arrives
-  after it. Stale or duplicate revisions are dropped.
+- **Revision state**: per segment the newest revision wins; a final is never replaced, and nothing
+  after a final is accepted for that segment. Stale or duplicate revisions are dropped.
 - **Bounded history**: finals are kept for 60 s (max 10 000). `HISTORY` is sent on `CLIENT_HELLO`,
   excluding what the client already holds, which handles reconnect and late join.
 - **Per-client queue and writer**: each client has its own queue with at most one message per
   segment (the newest state) and its own writer task. A slow client cannot delay the others.
 - **Semantic backpressure**: obsolete provisionals are coalesced; finals are never dropped. A
   ping/pong window measures how far behind a client is. A truly slow reader is switched to
-  finals-only until it recovers, a long (high-RTT) path is not mistaken for a slow reader.
+  finals-only until it recovers; a long (high-RTT) path is not mistaken for a slow reader.
 - **Bandwidth-limit (lean) mode**: if most clients are slow at the same moment, the shared link
   is the bottleneck. The server then sends unfragmented messages and far fewer pings, which
   removes protocol overhead on a nearly full link, while keeping queues, coalescing and finals
@@ -132,8 +133,10 @@ Run the tests on an otherwise idle VM, with at least 1 GB of free disk.
 
 - Under a 500 kbit cap, delivery of every provisional revision is about 92 %; the missing ones are
   deliberately coalesced, and every final caption is delivered.
-- The public harness can crash with `load_clients.py failed` under heavy delay; this is a harness
-  issue, so affected runs are retried.
+- Lean mode needs at least 8 clients and about 1-2 s of sustained slowness to trigger, so very small
+  or very short tests run in normal mode.
+- The public harness can crash with `load_clients.py failed` under heavy delay; this appears to be an
+  issue in the public harness, so the script retries affected runs.
 
 ## 8. Repository layout
 
