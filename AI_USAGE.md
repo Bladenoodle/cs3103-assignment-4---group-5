@@ -4,8 +4,7 @@
 
 | Tool | Used for |
 |---|---|
-| Claude (Anthropic), conversational | Design review of `solution_server.py`; proposing and critiquing changes to the revision-state, recovery, and backpressure logic; interpreting public-test output and server logs; diagnosing a client-side crash observed during T3. |
-| *(add any other tools the team used, e.g. GitHub Copilot, ChatGPT, Cursor — and what each was used for)* | |
+| Claude (Anthropic), conversational | Design review of `solution_server.py`; proposing and critiquing changes to the revision-state, recovery, and backpressure logic; interpreting public-test output and server logs; diagnosing a client-side crash observed during T3. | |
 
 No AI tool was given write access to the repository. Every change was applied
 by a team member, reviewed line by line, and accepted only after it was
