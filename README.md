@@ -16,7 +16,7 @@ network is impaired (delay, loss, or a bandwidth cap).
 ```bash
 sudo apt update
 sudo apt install -y python3 python3-venv python3-pip iproute2
-git clone <repo-url> && cd cs3103-assignment-4---group-5
+git clone https://github.com/Bladenoodle/cs3103-assignment-4---group-5/tree/main && cd cs3103-assignment-4---group-5
 python3 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
