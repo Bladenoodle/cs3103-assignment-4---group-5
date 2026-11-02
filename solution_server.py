@@ -135,6 +135,92 @@ class PathRtt:
 
 PATH = PathRtt()
 
+# ---- Lean mode (constrained-bandwidth detection) -------------------------
+# Per-message pings double the number of small packets on the wire. On a link
+# that is already nearly full (a bandwidth cap) that overhead alone pushes the
+# offered load over capacity, so queues grow and coalescing throws away
+# revisions. A bandwidth cap is recognisable because EVERY client slows down at
+# once (they share the bottleneck), unlike a slow reader (a few clients) or a
+# long/lossy path (latency high but not for most clients at the same time).
+# While lean mode is on we send whole (unfragmented) messages and only one
+# probe ping per LEAN_PING_EVERY messages. Per-client bounded queues,
+# coalescing and finals-first delivery are unchanged.
+LEAN_ENTER_LATENCY_S = 0.6     # a pong slower than this counts as "slow"
+LEAN_EXIT_LATENCY_S = 0.3      # a pong faster than this counts as "fast"
+LEAN_ENTER_FRACTION = 0.6      # share of recent pongs that must be slow
+LEAN_EXIT_FRACTION = 0.5       # share of recent pongs that must be fast
+LEAN_ENTER_HOLD_S = 1.0        # ...for at least this long
+LEAN_EXIT_HOLD_S = 2.0
+LEAN_MIN_DWELL_S = 5.0         # stay lean at least this long
+LEAN_WINDOW_S = 3.0            # pong samples older than this are forgotten
+LEAN_MIN_SAMPLES = 20
+LEAN_MIN_CLIENTS = 8           # never judge "everyone is slow" from a handful
+LEAN_PING_EVERY = 16           # lean mode: one probe ping per N messages
+LEAN_PING_MAX_GAP_S = 3.0      # ...but at least one every few seconds
+
+
+class LinkMonitor:
+    """Decides whether the shared link (not individual clients) is the problem."""
+
+    def __init__(self) -> None:
+        self.lean = False
+        self.transitions = 0
+        self._samples: deque[tuple[float, float, int]] = deque()
+        self._cond_since: float | None = None
+        self._lean_since = 0.0
+
+    def add(self, now: float, latency: float, client_key: int) -> None:
+        self._samples.append((now, latency, client_key))
+
+    def update(self, now: float) -> None:
+        samples = self._samples
+        while samples and now - samples[0][0] > LEAN_WINDOW_S:
+            samples.popleft()
+        n = len(samples)
+        if n < LEAN_MIN_SAMPLES or len({s[2] for s in samples}) < LEAN_MIN_CLIENTS:
+            self._cond_since = None
+            return
+        slow = sum(1 for s in samples if s[1] > LEAN_ENTER_LATENCY_S) / n
+        fast = sum(1 for s in samples if s[1] < LEAN_EXIT_LATENCY_S) / n
+
+        if not self.lean:
+            if slow >= LEAN_ENTER_FRACTION:
+                if self._cond_since is None:
+                    self._cond_since = now
+                elif now - self._cond_since >= LEAN_ENTER_HOLD_S:
+                    self._switch(True, now, slow, fast)
+            else:
+                self._cond_since = None
+        else:
+            if now - self._lean_since >= LEAN_MIN_DWELL_S and fast >= LEAN_EXIT_FRACTION:
+                if self._cond_since is None:
+                    self._cond_since = now
+                elif now - self._cond_since >= LEAN_EXIT_HOLD_S:
+                    self._switch(False, now, slow, fast)
+            else:
+                self._cond_since = None
+
+    def _switch(self, lean: bool, now: float, slow: float, fast: float) -> None:
+        self.lean = lean
+        self.transitions += 1
+        self._cond_since = None
+        self._lean_since = now
+        self._samples.clear()
+        print(
+            f"link monitor: lean mode {'ON' if lean else 'OFF'} "
+            f"(slow_pongs={slow:.0%}, fast_pongs={fast:.0%}, clients={len(CLIENTS)})",
+            flush=True,
+        )
+
+
+MONITOR = LinkMonitor()
+
+
+async def link_monitor_task() -> None:
+    while True:
+        await asyncio.sleep(0.25)
+        MONITOR.update(time.monotonic())
+
 
 @dataclass
 class HistoryEntry:
@@ -161,6 +247,9 @@ class ClientState:
     suspect_slow: bool = False
     # Statistics, useful for the report / viva.
     coalesced: int = 0
+    # Lean mode: messages sent since the last probe ping, and when it was sent.
+    since_ping: int = 0
+    last_ping_at: float = 0.0
 
     def congested(self, now: float) -> bool:
         return now < self.congested_until
@@ -413,8 +502,9 @@ def reap_pongs(client: ClientState, inflight: deque, now: float) -> None:
             continue
         if not client.congested(now):
             # Samples from congested (slow) clients must not inflate the
-            # healthy-path RTT estimate.
+            # healthy-path RTT estimate, nor vote in the link monitor.
             PATH.update(latency)
+            MONITOR.add(now, latency, id(client))
         if latency <= PATH.healthy_latency():
             client.note_healthy_pong(now)
 
@@ -461,7 +551,9 @@ async def send_live_updates(client: ClientState) -> None:
                     continue
 
                 payload = json.dumps(message, separators=(",", ":"))
-                if client.suspect_slow:
+                if MONITOR.lean:
+                    frags = 1     # fewer frames/packets on a full link
+                elif client.suspect_slow:
                     frags = SLOW_CLIENT_FRAGMENTS
                 elif PATH.value < FRAGMENT_MAX_PATH_RTT_S:
                     frags = DEFAULT_FRAGMENTS
@@ -475,7 +567,15 @@ async def send_live_updates(client: ClientState) -> None:
                 else:
                     await client.ws.send(payload)
                 sent_at = time.monotonic()
-                inflight.append((await client.ws.ping(), sent_at))
+                client.since_ping += 1
+                if (
+                    not MONITOR.lean
+                    or client.since_ping >= LEAN_PING_EVERY
+                    or sent_at - client.last_ping_at >= LEAN_PING_MAX_GAP_S
+                ):
+                    client.since_ping = 0
+                    client.last_ping_at = sent_at
+                    inflight.append((await client.ws.ping(), sent_at))
 
             # No await occurs between checking pending and clearing the event,
             # so an enqueue cannot be lost here on the asyncio event loop.
@@ -527,7 +627,7 @@ async def handle_client(ws: Any, hello: dict[str, Any]) -> None:
         print(
             f"client disconnected: id={client_id}; clients={len(CLIENTS)}; "
             f"coalesced={client.coalesced}; congestion_events={client.congestion_events}; "
-            f"path_rtt_ms={PATH.value * 1000:.0f}",
+            f"path_rtt_ms={PATH.value * 1000:.0f}; lean={MONITOR.lean}",
             flush=True,
         )
 
@@ -564,7 +664,11 @@ async def main_async(port: int) -> None:
         write_limit=WRITE_LIMIT_BYTES,
     ):
         print(f"LiveRecall server listening on ws://0.0.0.0:{port}", flush=True)
-        await asyncio.Future()
+        monitor = asyncio.create_task(link_monitor_task())
+        try:
+            await asyncio.Future()
+        finally:
+            monitor.cancel()
 
 
 def main() -> None:
